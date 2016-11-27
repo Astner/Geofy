@@ -15,13 +15,16 @@
     update any existing page or create new pages.
   </p>
 
-  <button (click)="onClick()" style="min-height: 50">go</button>
+  <button (click)="hitMeOnClick()" style="min-height: 100px; height: 100; width:100%;margin: 5px">Hit Me</button>
+  <button (click)="saveToDatabase()" style="min-height: 100px; height: 100; width:100%;margin: 5px">save</button>
+  <button (click)="getAllToDatabase()" style="min-height: 100px; height: 100; width:100%;margin: 5px">retrieve</button>
+
   <!-- <div id="map" style="min-height: 50%; height: 50%"> go</div> -->
-  <iframe
+  <iframe src="https://embed.spotify.com/?uri=spotify:track:4PjcfyZZVE10TFd9EKA72r" width="300" height="380" frameborder="0" allowtransparency="true"></iframe>
+  <!-- <iframe
   width="600"
   height="450"
   frameborder="0" style="border:0"
-  src="https://www.google.com/maps/embed/v1/place?key=AIzaSyDe0YqAb4iDOGyRku5rYwG4FnvyNDoG8BE
-    &q=Space+Needle,Seattle+WA" allowfullscreen>
-</iframe>
+  src="https://www.google.com/maps/embed/v1/place?key=AIzaSyDe0YqAb4iDOGyRku5rYwG4FnvyNDoG8BE&q=Space+Needle,Seattle+WA" allowfullscreen>
+</iframe> -->
 </ion-content>

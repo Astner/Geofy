@@ -4,6 +4,8 @@ import { NavController, Platform } from 'ionic-angular';
 import { SQLite ,GoogleMap, GoogleMapsEvent, GoogleMapsLatLng} from 'ionic-native';
 import {Http} from '@angular/http';
 import 'rxjs/add/operator/map';
+import { Storage } from '@ionic/storage';
+
 
 interface spotify{
 	limit:number;
@@ -16,52 +18,59 @@ interface spotify{
 
 
 export class HomePage {
+
 	 map:GoogleMap;
 	 data:number;
-
-        res:spotify;
+     res:spotify;
+     dataBase: SQLite;
+     latitude:any;
+     longitude:any;
+     currentTrackId:string;
+     comment:string;
 
   constructor(public navCtrl: NavController,public platform:Platform, public http:Http) {
-        //this.setupGoogleMap()
-
-        var url ='https://api.spotify.com/v1/search?q=tania%20bowra&type=track';
-        var response = this.http.get(url).map(res => res.json()).subscribe(data =>{
-        	alert(<string>data.tracks.limit);
-        });
-
-        
-        //this.res = JSON.parse(this.data);
-
-       
+  	platform.ready().then(()=> {
+  		this.connectToDatabase();
+  			})
+  		
+		       
   }
 
- onSuccess(position) {
-        alert('Latitude: '          + position.coords.latitude          + '\n' +
-              'Longitude: '         + position.coords.longitude         + '\n' +
-              'Altitude: '          + position.coords.altitude          + '\n' +
-              'Accuracy: '          + position.coords.accuracy          + '\n' +
-              'Altitude Accuracy: ' + position.coords.altitudeAccuracy  + '\n' +
-              'Heading: '           + position.coords.heading           + '\n' +
-              'Speed: '             + position.coords.speed             + '\n' +
-              'Timestamp: '         + position.timestamp                + '\n');
+ onSuccess = (position)=> {
+    
+        this.saveLatAndLong(position.coords.latitude,position.coords.longitude);
+
     };
 
     // onError Callback receives a PositionError object
     //
-    onError(error) {
+    onError =(error) => {
         alert('code: '    + error.code    + '\n' +
               'message: ' + error.message + '\n');
     }
 
-  onClick(){
-  	//navigator.geolocation.getCurrentPosition(this.onSuccess, this.onError);
+     saveLatAndLong = (lat,long)=>{
+        alert("in on success" );
 
-  	let db = new SQLite();
-            db.openDatabase({
+    	   this.latitude =  lat;
+        this.longitude = 	 long;
+
+    }
+  hitMeOnClick =()=>{
+  	navigator.geolocation.getCurrentPosition(this.onSuccess, this.onError);
+  	this.currentTrackId = "4PjcfyZZVE10TFd9EKA72r";
+  	this.comment = "success";
+  }
+
+  connectToDatabase=()=>{
+  	this.dataBase = new SQLite();
+            this.dataBase.openDatabase({
                 name: "data.db",
                 location: "default"
             }).then(() => {
-                db.executeSql("CREATE TABLE IF NOT EXISTS people (id INTEGER PRIMARY KEY AUTOINCREMENT, firstname TEXT, lastname TEXT)", {}).then((data) => {
+                this.dataBase.executeSql("DROP TABLE IF EXISTS TRACKS", {})
+                this.dataBase.executeSql("CREATE TABLE IF NOT EXISTS TRACKS (track_id TEXT, lat TEXT, long TEXT, comment TEXT)", {})
+                .then((data) => {
                     alert("TABLE CREATED: "+ data);
                 }, (error) => {
                     alert("Unable to execute sql"+ error);
@@ -71,43 +80,56 @@ export class HomePage {
             });
   }
 
-  setupGoogleMap(){
-  	let location = new GoogleMapsLatLng(-34.9290,138.6010);
-  	alert("inside");
 
-    this.map = new GoogleMap('map', {
-          'backgroundColor': 'green',
-          'controls': {
-            'compass': true,
-            'myLocationButton': true,
-            'indoorPicker': true,
-            'zoom': true
-          },
-          'gestures': {
-            'scroll': true,
-            'tilt': true,
-            'rotate': true,
-            'zoom': true
-          },
-          'camera': {
-            'latLng': location,
-            'tilt': 30,
-            'zoom': 15,
-            'bearing': 50
-          }
-        });
- 
-        this.map.on(GoogleMapsEvent.MAP_READY).subscribe(() => {
-            alert('Map is ready!');
+  saveToDatabase=()=>{
+	    this.dataBase.openDatabase({
+	        name: "data.db",
+	        location: "default"
+	    }).then(() => {
+        alert("in saving" );
 
-
-        });
-        this.map.on(GoogleMapsEvent.CAMERA_IDLE).subscribe(() => {
-            alert('Map is idle!');
-
-
-        });
-
+	        this.dataBase.executeSql('INSERT INTO TRACKS (track_id , lat , long , comment) VALUES (?,?,?,?);',[this.currentTrackId,this.latitude,this.longitude,
+	        	this.comment])
+	        .then((data) => {
+	            alert("data saved: "+ data);
+	        }, (error) => {
+	            alert("Unable to execute sql"+ error.code);
+	        })
+	    }, (error) => {
+	        alert("Unable to open database"+ error);
+	    });
   }
 
+  getAllToDatabase=()=>{
+	    this.dataBase.openDatabase({
+	        name: "data.db",
+	        location: "default"
+	    }).then(() => {
+	        this.dataBase.executeSql("SELECT * FROM TRACKS", {})
+	        .then((results) => {
+	        	for (var i=0; i<results.rows.length; i++) 
+                   { 
+                       alert("data stored: "+ results.rows.item(i)['track_id'] + '\n'+
+										results.rows.item(i)['lat'] + '\n'+
+										results.rows.item(i)['long'] + '\n'+
+										results.rows.item(i)['comment'] + '\n'
+	            	);
+                   } 
+
+	            
+	        }, (error) => {
+	            alert("Unable to execute sql"+ error);
+	        })
+	    }, (error) => {
+	        alert("Unable to open database"+ error);
+	    });
+  }
+  getSongFromSpotify =(songID)=>{
+  	//var url ='https://api.spotify.com/v1/search?q=tania%20bowra&type=track';
+  	var url ='https://api.spotify.com/v1/traks/4PjcfyZZVE10TFd9EKA72r'; // this needs authentication
+
+        var response = this.http.get(url).map(res => res.json()).subscribe(data =>{
+        	alert(<string>data.tracks.limit);
+        });
+  }
 }
